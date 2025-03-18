@@ -2,6 +2,7 @@ using ApiTest.DTOs;
 using ApiTest.Model;
 using ApiTest.Repositories.Interfaces;
 using ApiTest.Utils;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace ApiTest.Services
 {
@@ -11,13 +12,15 @@ namespace ApiTest.Services
         private readonly IBalanceRepository _balanceRepository;
         private readonly CNPJService _CNPJService;
         private readonly ApplicationDbContext _dbContext;
-        public AccountService(IAccountRepository accountRepository, IBalanceRepository balanceRepository, CNPJService CNPJService, ApplicationDbContext context
-        )
+        private readonly IMemoryCache _cache;
+
+        public AccountService(IAccountRepository accountRepository, IBalanceRepository balanceRepository, CNPJService CNPJService, ApplicationDbContext context, IMemoryCache cache)
         {
             _accountRepository = accountRepository;
             _balanceRepository = balanceRepository;
             _CNPJService = CNPJService;
             _dbContext = context;
+            _cache = cache;
         }
 
         public async Task<Account> CreateAccountAsync(string cnpj)
@@ -26,13 +29,18 @@ namespace ApiTest.Services
 
             try
             {
+                if (_cache.TryGetValue(cnpj, out Account? cachedData) && cachedData != null)
+                {
+                    return cachedData;
+                }
+
                 bool isValidCnpj = CnpjValidator.IsValidCnpj(cnpj);
 
                 if (!isValidCnpj)
                 {
                     throw new InvalidOperationException("Invalid CNPJ");
-
                 }
+
 
                 var isCompanyFound = await _accountRepository.GetByCnpjAsync(cnpj);
 
@@ -42,6 +50,19 @@ namespace ApiTest.Services
                 }
 
                 var cnpjData = await _CNPJService.GetCompanyData(cnpj);
+
+
+                if (cnpjData.Situacao == "ATIVA")
+                {
+                    throw new Exception("Account status invalid");
+                }
+
+                string[] allowedLegalNatures = ["2062", "2135", "2233"];
+
+                if (!allowedLegalNatures.Contains(cnpjData.NaturezaJuridica))
+                {
+                    throw new Exception("Natureza Juridica invalid");
+                }
 
                 var account = new AccountDTO
                 {
@@ -66,6 +87,8 @@ namespace ApiTest.Services
                 await _dbContext.SaveChangesAsync();
 
                 await transaction.CommitAsync();
+
+                _cache.Set(cnpj, createdAccount, TimeSpan.FromHours(1));
 
                 return createdAccount;
             }

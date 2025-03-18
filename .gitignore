@@ -42,3 +42,5 @@ artifacts/
 # Microsoft Azure Web Apps
 # The folder "publish" contains files that should not be committed.
 publish/
+
+.fake

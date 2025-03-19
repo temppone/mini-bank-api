@@ -5,7 +5,7 @@ namespace ApiTest.Repositories.Interfaces
 {
     public interface IBalanceRepository
     {
-        Task<Balance?> GetByIdAsync(Guid id);
+        Task<Balance?> GetByAccountIdAsync(Guid id);
         Task<Balance> CreateAsync(BalanceDTO balance);
         Task<bool> UpdateAsync(Balance balance);
     }

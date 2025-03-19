@@ -15,9 +15,9 @@ namespace ApiTest.Repositories
             _balanceDbSet = context.Balances;
         }
 
-        public Task<Balance?> GetByIdAsync(Guid id)
+        public Task<Balance?> GetByAccountIdAsync(Guid accountIdentifier)
         {
-            var balance = _balanceDbSet.ToList().FirstOrDefault(b => b.Identifier == id);
+            var balance = _balanceDbSet.ToList().FirstOrDefault(b => b.AccountIdentifier == accountIdentifier);
 
             return Task.FromResult(balance);
         }
@@ -28,6 +28,7 @@ namespace ApiTest.Repositories
             {
                 Identifier = Guid.NewGuid(),
                 Amount = balance.Amount,
+                AccountIdentifier = balance.AccountIdentifier,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             };

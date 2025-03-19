@@ -7,6 +7,7 @@ using Npgsql;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddMemoryCache();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -20,6 +21,7 @@ builder.Services.AddScoped<IBalanceRepository, BalanceRepository>();
 builder.Services.AddScoped<ITransactionRepository, TransactionRepository>();
 builder.Services.AddScoped<CNPJService>();
 builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<TransactionService>();
 
 var app = builder.Build();
 

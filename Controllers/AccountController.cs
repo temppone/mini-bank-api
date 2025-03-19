@@ -53,7 +53,9 @@ namespace ApiTest.Controllers
                 return NotFound();
 
             account.Name = accountDto.Name;
+
             var updated = await _accountRepository.UpdateAsync(account);
+
             if (!updated)
                 return BadRequest("Failed to update account.");
 

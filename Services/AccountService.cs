@@ -6,22 +6,13 @@ using Microsoft.Extensions.Caching.Memory;
 
 namespace ApiTest.Services
 {
-    public class AccountService
+    public class AccountService(IAccountRepository accountRepository, IBalanceRepository balanceRepository, CNPJService CNPJService, ApplicationDbContext context, IMemoryCache cache)
     {
-        private readonly IAccountRepository _accountRepository;
-        private readonly IBalanceRepository _balanceRepository;
-        private readonly CNPJService _CNPJService;
-        private readonly ApplicationDbContext _dbContext;
-        private readonly IMemoryCache _cache;
-
-        public AccountService(IAccountRepository accountRepository, IBalanceRepository balanceRepository, CNPJService CNPJService, ApplicationDbContext context, IMemoryCache cache)
-        {
-            _accountRepository = accountRepository;
-            _balanceRepository = balanceRepository;
-            _CNPJService = CNPJService;
-            _dbContext = context;
-            _cache = cache;
-        }
+        private readonly IAccountRepository _accountRepository = accountRepository;
+        private readonly IBalanceRepository _balanceRepository = balanceRepository;
+        private readonly CNPJService _CNPJService = CNPJService;
+        private readonly ApplicationDbContext _dbContext = context;
+        private readonly IMemoryCache _cache = cache;
 
         public async Task<Account> CreateAccountAsync(string cnpj)
         {
@@ -51,17 +42,9 @@ namespace ApiTest.Services
 
                 var cnpjData = await _CNPJService.GetCompanyData(cnpj);
 
-
-                if (cnpjData.Situacao == "ATIVA")
+                if (cnpjData.Situacao != "ATIVA")
                 {
                     throw new Exception("Account status invalid");
-                }
-
-                string[] allowedLegalNatures = ["2062", "2135", "2233"];
-
-                if (!allowedLegalNatures.Contains(cnpjData.NaturezaJuridica))
-                {
-                    throw new Exception("Natureza Juridica invalid");
                 }
 
                 var account = new AccountDTO

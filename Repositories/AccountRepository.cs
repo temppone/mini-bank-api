@@ -1,7 +1,6 @@
 using ApiTest.DTOs;
 using ApiTest.Model;
 using ApiTest.Repositories.Interfaces;
-using Microsoft.EntityFrameworkCore;
 
 namespace ApiTest.Repositories
 {

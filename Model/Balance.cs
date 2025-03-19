@@ -10,5 +10,13 @@ namespace ApiTest.Model
         public decimal Amount { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+        public void Withdraw(decimal withdrawAmount)
+        {
+            Amount -= withdrawAmount;
+        }
+        public void Deposit(decimal depositAmount)
+        {
+            Amount += depositAmount;
+        }
     }
 }

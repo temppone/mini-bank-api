@@ -15,20 +15,19 @@ namespace ApiTest.Repositories
             _transactionDbSet = context.Transactions;
         }
 
-        public Task<List<Transaction>> GetAllAsync(Guid accountIdentifier)
+        public async Task<List<Transaction>> GetAllByAccountIdentifierAsync(Guid accountIdentifier)
         {
-            var transactions = _transactionDbSet.ToList().Where(t =>
-                t.SourceAccountIdentifier == accountIdentifier || t.DestinationAccountIdentifier == accountIdentifier).ToList();
-
-            return Task.FromResult(new List<Transaction>());
+            return await _transactionDbSet
+                .Where(t => t.SourceAccountIdentifier == accountIdentifier || t.DestinationAccountIdentifier == accountIdentifier)
+                .ToListAsync();
         }
 
 
         public Task<Transaction?> GetByIdAsync(Guid identifier)
         {
-            var transaction = _transactionDbSet.ToList().FirstOrDefault(t => t.Identifier == identifier);
+            var transactions = _transactionDbSet.ToList().FirstOrDefault(t => t.Identifier == identifier);
 
-            return Task.FromResult(transaction);
+            return Task.FromResult(transactions);
         }
 
         public Task<Transaction> CreateAsync(TransactionDTO transaction)
@@ -36,7 +35,7 @@ namespace ApiTest.Repositories
             var newTransaction = new Transaction
             {
                 Amount = transaction.Amount,
-                Date = transaction.Date,
+                Date = DateTime.UtcNow,
                 DestinationAccountIdentifier = transaction.DestinationAccountIdentifier,
                 SourceAccountIdentifier = transaction.SourceAccountIdentifier,
                 Identifier = Guid.NewGuid(),
@@ -50,7 +49,7 @@ namespace ApiTest.Repositories
         public Task<List<DailyTransactions>> GetDailyTransactionsAsync(Guid accountId)
         {
             var transactions = _transactionDbSet.ToList().Where(t =>
-                t.SourceAccountIdentifier == accountId || t.DestinationAccountIdentifier == accountId).ToList();
+                t.SourceAccountIdentifier == accountId).ToList();
 
             var dailyTransactions = transactions.GroupBy(t => t.Date.Date)
                 .Select(g => new DailyTransactions

@@ -49,7 +49,7 @@ namespace ApiTest.Repositories
         public Task<List<DailyTransactions>> GetDailyTransactionsAsync(Guid accountId)
         {
             var transactions = _transactionDbSet.ToList().Where(t =>
-                t.SourceAccountIdentifier == accountId).ToList();
+                t.SourceAccountIdentifier == accountId || t.DestinationAccountIdentifier == accountId).ToList();
 
             var dailyTransactions = transactions.GroupBy(t => t.Date.Date)
                 .Select(g => new DailyTransactions

@@ -8,12 +8,11 @@ namespace ApiTest.Controllers
     [Route("[controller]")]
     public class BalanceController(IBalanceRepository balanceRepository) : ControllerBase
     {
-        private readonly IBalanceRepository _balanceRepository = balanceRepository;
 
         [HttpGet("{accountIdentifier}")]
         public async Task<ActionResult> GetBalanceByAccountId(Guid accountIdentifier)
         {
-            var balance = await _balanceRepository.GetByAccountIdAsync(accountIdentifier);
+            var balance = await balanceRepository.GetByAccountIdAsync(accountIdentifier);
 
             if (balance == null)
             {
@@ -31,7 +30,7 @@ namespace ApiTest.Controllers
                 return BadRequest("Amount cannot be null");
             }
 
-            var balance = await _balanceRepository.GetByAccountIdAsync(
+            var balance = await balanceRepository.GetByAccountIdAsync(
                 balanceDTO.AccountIdentifier
             );
 
@@ -42,7 +41,7 @@ namespace ApiTest.Controllers
 
             balance.Amount = balanceDTO.Amount;
 
-            await _balanceRepository.UpdateAsync(balance);
+            await balanceRepository.UpdateAsync(balance);
 
             return NoContent();
         }

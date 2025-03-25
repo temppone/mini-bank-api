@@ -9,7 +9,7 @@ namespace ApiTest.Repositories.Interfaces
         Task<Account?> GetByIdAsync(Guid identifier);
         Task<Account> CreateAsync(AccountDTO account);
         Task<bool> UpdateAsync(Account account);
-        Task<bool> DeleteAsync(Guid id);
+        Task<bool> DeleteAsync(Guid identifier);
         Task<Account> GetByCnpjAsync(string cnpj);
     }
 }

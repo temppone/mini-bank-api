@@ -9,13 +9,11 @@ namespace ApiTest.Controllers
     [Route("[controller]")]
     public class TransactionController(ITransactionRepository transactionRepository, TransactionService transactionService) : ControllerBase
     {
-        private readonly ITransactionRepository _transactionRepository = transactionRepository;
-        private readonly TransactionService _transactionService = transactionService;
 
         [HttpGet("{accountIdentifier}")]
         public async Task<ActionResult> GetTransactionsByAccountIdentifier(Guid accountIdentifier)
         {
-            var transactions = await _transactionRepository.GetAllByAccountIdentifierAsync(accountIdentifier);
+            var transactions = await transactionRepository.GetAllByAccountIdentifierAsync(accountIdentifier);
 
             return Ok(transactions);
         }
@@ -23,7 +21,7 @@ namespace ApiTest.Controllers
         [HttpPost]
         public async Task<ActionResult> CreateTransaction(TransactionDTO transactionDTO)
         {
-            var createdTransaction = await _transactionService.CreateTransaction(transactionDTO);
+            var createdTransaction = await transactionService.CreateTransactionAsync(transactionDTO);
 
             return CreatedAtAction(nameof(CreateTransaction), new { identifier = createdTransaction.Identifier }, createdTransaction);
         }
@@ -31,7 +29,7 @@ namespace ApiTest.Controllers
         [HttpGet("DailyTransactions/{accountIdentifier}")]
         public async Task<ActionResult> GetDailyTransactionsByAccountIdentifier(Guid accountIdentifier)
         {
-            var dailyTransactions = await _transactionRepository.GetDailyTransactionsAsync(accountIdentifier);
+            var dailyTransactions = await transactionRepository.GetDailyTransactionsAsync(accountIdentifier);
 
             return Ok(dailyTransactions);
         }

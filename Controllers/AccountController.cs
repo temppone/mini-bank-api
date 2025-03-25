@@ -7,22 +7,24 @@ namespace ApiTest.Controllers
 {
     [ApiController]
     [Route("[controller]")]
-    public class AccountController(IAccountRepository accountRepository, AccountService accountService) : ControllerBase
+    public class AccountController(
+        IAccountRepository accountRepository,
+        AccountService accountService
+        ) : ControllerBase
     {
-        private readonly IAccountRepository _accountRepository = accountRepository;
-        private readonly AccountService _accountService = accountService;
 
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
-            var accounts = await _accountRepository.GetAllAsync();
+            var accounts = await accountRepository.GetAllAsync();
+
             return Ok(accounts);
         }
 
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(Guid id)
         {
-            var account = await _accountRepository.GetByIdAsync(id);
+            var account = await accountRepository.GetByIdAsync(id);
             if (account == null)
                 return NotFound();
             return Ok(account);
@@ -34,7 +36,7 @@ namespace ApiTest.Controllers
             if (Cnpj == null)
                 return BadRequest("Account data is required.");
 
-            var account = await _accountService.CreateAccountAsync(Cnpj);
+            var account = await accountService.CreateAccountAsync(Cnpj);
 
             if (account == null)
                 return BadRequest("Failed to create account.");
@@ -48,13 +50,13 @@ namespace ApiTest.Controllers
             if (accountDto == null)
                 return BadRequest("Account data is required.");
 
-            var account = await _accountRepository.GetByIdAsync(id);
+            var account = await accountRepository.GetByIdAsync(id);
             if (account == null)
                 return NotFound();
 
             account.Name = accountDto.Name;
 
-            var updated = await _accountRepository.UpdateAsync(account);
+            var updated = await accountRepository.UpdateAsync(account);
 
             if (!updated)
                 return BadRequest("Failed to update account.");
@@ -64,7 +66,7 @@ namespace ApiTest.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(Guid id)
         {
-            var deleted = await _accountRepository.DeleteAsync(id);
+            var deleted = await accountRepository.DeleteAsync(id);
             if (!deleted)
                 return NotFound();
 

@@ -1,31 +1,27 @@
 using ApiTest.DTOs;
 using ApiTest.Model;
 using ApiTest.Repositories.Interfaces;
+using ApiTest.Services.Domain;
+using ApiTest.Views;
 using Microsoft.EntityFrameworkCore;
 
 namespace ApiTest.Services
 {
     public class TransactionService(
-        IAccountRepository accountRepository,
         IBalanceRepository balanceRepository,
         ITransactionRepository transactionRepository,
-        ApplicationDbContext context
-        )
+        ApplicationDbContext dbContext
+        ) : ITransactionService
     {
 
-        private readonly ITransactionRepository _transactionRepository = transactionRepository;
-        private readonly IAccountRepository _accountRepository = accountRepository;
-        private readonly IBalanceRepository _balanceRepository = balanceRepository;
-        private readonly ApplicationDbContext _dbcontext = context;
-
-        public async Task<Transaction> CreateTransaction(TransactionDTO transactionDTO)
+        public async Task<TransactionView> CreateTransactionAsync(TransactionDTO transactionDTO)
         {
 
-            using var dbTransaction = await _dbcontext.Database.BeginTransactionAsync();
+            using var dbTransaction = await dbContext.Database.BeginTransactionAsync();
 
             try
             {
-                var sourceAccountBalance = await _balanceRepository
+                var sourceAccountBalance = await balanceRepository
                     .GetByAccountIdAsync(transactionDTO.SourceAccountIdentifier) ?? throw new Exception("Source account balance not found");
 
                 if (sourceAccountBalance.Amount < transactionDTO.Amount)
@@ -33,14 +29,14 @@ namespace ApiTest.Services
                     throw new Exception("Insuficient amount");
                 }
 
-                var destinationAccountBalance = await _balanceRepository
+                var destinationAccountBalance = await balanceRepository
                     .GetByAccountIdAsync(transactionDTO.DestinationAccountIdentifier) ?? throw new Exception("Destination account balance not found");
 
                 sourceAccountBalance.Withdraw(transactionDTO.Amount);
                 destinationAccountBalance.Deposit(transactionDTO.Amount);
 
-                await _balanceRepository.UpdateAsync(sourceAccountBalance);
-                await _balanceRepository.UpdateAsync(destinationAccountBalance);
+                await balanceRepository.UpdateAsync(sourceAccountBalance);
+                await balanceRepository.UpdateAsync(destinationAccountBalance);
 
                 TransactionDTO sourceAccountTransaction = new()
                 {
@@ -56,14 +52,23 @@ namespace ApiTest.Services
                     SourceAccountIdentifier = transactionDTO.SourceAccountIdentifier
                 };
 
-                Transaction createdTransaction = await _transactionRepository.CreateAsync(sourceAccountTransaction);
-                await _transactionRepository.CreateAsync(destinationAccountTransaction);
+                Transaction createdTransaction = await transactionRepository.CreateAsync(sourceAccountTransaction);
+                await transactionRepository.CreateAsync(destinationAccountTransaction);
 
-                await _dbcontext.SaveChangesAsync();
+                TransactionView transactionView = new()
+                {
+                    Identifier = createdTransaction.Identifier,
+                    Amount = createdTransaction.Amount,
+                    Date = createdTransaction.Date,
+                    SourceAccountIdentifier = createdTransaction.SourceAccountIdentifier,
+                    DestinationAccountIdentifier = createdTransaction.DestinationAccountIdentifier,
+                };
+
+                await dbContext.SaveChangesAsync();
 
                 await dbTransaction.CommitAsync();
 
-                return createdTransaction;
+                return transactionView;
             }
             catch
             {

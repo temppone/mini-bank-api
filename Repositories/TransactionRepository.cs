@@ -5,19 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ApiTest.Repositories
 {
-    public class TransactionRepository : ITransactionRepository
+    public class TransactionRepository(ApplicationDbContext dbContext) : ITransactionRepository
     {
-
-        private readonly DbSet<Transaction> _transactionDbSet;
-
-        public TransactionRepository(ApplicationDbContext context)
-        {
-            _transactionDbSet = context.Transactions;
-        }
-
         public async Task<List<Transaction>> GetAllByAccountIdentifierAsync(Guid accountIdentifier)
         {
-            return await _transactionDbSet
+            return await dbContext.Transactions
                 .Where(t => t.SourceAccountIdentifier == accountIdentifier || t.DestinationAccountIdentifier == accountIdentifier)
                 .ToListAsync();
         }
@@ -25,7 +17,7 @@ namespace ApiTest.Repositories
 
         public Task<Transaction?> GetByIdAsync(Guid identifier)
         {
-            var transactions = _transactionDbSet.ToList().FirstOrDefault(t => t.Identifier == identifier);
+            var transactions = dbContext.Transactions.ToList().FirstOrDefault(t => t.Identifier == identifier);
 
             return Task.FromResult(transactions);
         }
@@ -41,14 +33,14 @@ namespace ApiTest.Repositories
                 Identifier = Guid.NewGuid(),
             };
 
-            _transactionDbSet.Add(newTransaction);
+            dbContext.Transactions.Add(newTransaction);
 
             return Task.FromResult(newTransaction);
         }
 
         public Task<List<DailyTransactions>> GetDailyTransactionsAsync(Guid accountId)
         {
-            var transactions = _transactionDbSet.ToList().Where(t =>
+            var transactions = dbContext.Transactions.ToList().Where(t =>
                 t.SourceAccountIdentifier == accountId || t.DestinationAccountIdentifier == accountId).ToList();
 
             var dailyTransactions = transactions.GroupBy(t => t.Date.Date)

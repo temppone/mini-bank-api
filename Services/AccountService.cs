@@ -1,26 +1,27 @@
 using ApiTest.DTOs;
 using ApiTest.Model;
 using ApiTest.Repositories.Interfaces;
+using ApiTest.Services.Domain;
 using ApiTest.Utils;
+using ApiTest.Views;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace ApiTest.Services
 {
-    public class AccountService(IAccountRepository accountRepository, IBalanceRepository balanceRepository, CNPJService CNPJService, ApplicationDbContext context, IMemoryCache cache)
+    public class AccountService(
+        IAccountRepository accountRepository,
+        IBalanceRepository balanceRepository,
+        CNPJService CNPJService,
+        ApplicationDbContext context,
+        IMemoryCache cache) : IAccountService
     {
-        private readonly IAccountRepository _accountRepository = accountRepository;
-        private readonly IBalanceRepository _balanceRepository = balanceRepository;
-        private readonly CNPJService _CNPJService = CNPJService;
-        private readonly ApplicationDbContext _dbContext = context;
-        private readonly IMemoryCache _cache = cache;
-
-        public async Task<Account> CreateAccountAsync(string cnpj)
+        public async Task<AccountView> CreateAccountAsync(string cnpj)
         {
-            using var transaction = await _dbContext.Database.BeginTransactionAsync();
+            using var transaction = await context.Database.BeginTransactionAsync();
 
             try
             {
-                if (_cache.TryGetValue(cnpj, out Account? cachedData) && cachedData != null)
+                if (cache.TryGetValue(cnpj, out AccountView? cachedData) && cachedData != null)
                 {
                     return cachedData;
                 }
@@ -33,14 +34,14 @@ namespace ApiTest.Services
                 }
 
 
-                var isCompanyFound = await _accountRepository.GetByCnpjAsync(cnpj);
+                var isCompanyFound = await accountRepository.GetByCnpjAsync(cnpj);
 
                 if (isCompanyFound != null)
                 {
                     throw new InvalidOperationException("Account with this CNPJ already exists.");
                 }
 
-                var cnpjData = await _CNPJService.GetCompanyData(cnpj);
+                var cnpjData = await CNPJService.GetCompanyData(cnpj);
 
                 if (cnpjData.Situacao != "ATIVA")
                 {
@@ -55,7 +56,7 @@ namespace ApiTest.Services
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                var createdAccount = (await _accountRepository.CreateAsync(account) ?? throw new Exception("Failed to create account")) ?? throw new Exception("Failed to create account");
+                var createdAccount = (await accountRepository.CreateAsync(account) ?? throw new Exception("Failed to create account")) ?? throw new Exception("Failed to create account");
 
                 var balance = new BalanceDTO
                 {
@@ -65,15 +66,22 @@ namespace ApiTest.Services
                     UpdatedAt = DateTime.UtcNow
                 };
 
-                await _balanceRepository.CreateAsync(balance);
+                AccountView accountView = new()
+                {
+                    Cnpj = createdAccount.Cnpj,
+                    Identifier = createdAccount.Identifier,
+                    Name = createdAccount.Name,
+                };
 
-                await _dbContext.SaveChangesAsync();
+                await balanceRepository.CreateAsync(balance);
+
+                await context.SaveChangesAsync();
 
                 await transaction.CommitAsync();
 
-                _cache.Set(cnpj, createdAccount, TimeSpan.FromHours(1));
+                cache.Set(cnpj, createdAccount, TimeSpan.FromHours(1));
 
-                return createdAccount;
+                return accountView;
             }
             catch
             {

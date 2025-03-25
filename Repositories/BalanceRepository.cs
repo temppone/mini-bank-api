@@ -5,19 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ApiTest.Repositories
 {
-    public class BalanceRepository : IBalanceRepository
+    public class BalanceRepository(ApplicationDbContext dbContext) : IBalanceRepository
     {
-
-        private readonly DbSet<Balance> _balanceDbSet;
-
-        public BalanceRepository(ApplicationDbContext context)
-        {
-            _balanceDbSet = context.Balances;
-        }
-
         public Task<Balance?> GetByAccountIdAsync(Guid accountIdentifier)
         {
-            var balance = _balanceDbSet.ToList().FirstOrDefault(b => b.AccountIdentifier == accountIdentifier);
+            var balance = dbContext.Balances.ToList().FirstOrDefault(b => b.AccountIdentifier == accountIdentifier);
 
             return Task.FromResult(balance);
         }
@@ -33,14 +25,14 @@ namespace ApiTest.Repositories
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _balanceDbSet.Add(newBalance);
+            dbContext.Balances.Add(newBalance);
 
             return Task.FromResult(newBalance);
         }
 
         public async Task<bool> UpdateAsync(Balance balance)
         {
-            var existingBalance = await _balanceDbSet
+            var existingBalance = await dbContext.Balances
                 .FirstOrDefaultAsync(b => b.Identifier == balance.Identifier);
 
             if (existingBalance != null)

@@ -11,5 +11,4 @@ namespace ApiTest.Model
         public Guid DestinationAccountIdentifier { get; set; }
         public Guid SourceAccountIdentifier { get; set; }
     }
-
 }

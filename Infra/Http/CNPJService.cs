@@ -1,18 +1,11 @@
 using System.Text.Json;
 using ApiTest.Model;
 
-public class CNPJService
+public class CNPJService(HttpClient httpClient)
 {
-    private readonly HttpClient _httpClient;
-
-    public CNPJService(HttpClient httpClient)
-    {
-        _httpClient = httpClient;
-    }
-
     public async Task<CNPJInfoResponse> GetCompanyData(string cnpj)
     {
-        var response = await _httpClient.GetAsync($"https://www.receitaws.com.br/v1/cnpj/{cnpj}");
+        var response = await httpClient.GetAsync($"https://www.receitaws.com.br/v1/cnpj/{cnpj}");
 
 
         if (response.IsSuccessStatusCode)

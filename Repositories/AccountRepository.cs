@@ -1,33 +1,28 @@
 using ApiTest.DTOs;
 using ApiTest.Model;
 using ApiTest.Repositories.Interfaces;
+using ApiTest.Views;
 
 namespace ApiTest.Repositories
 {
-    public class AccountRepository : IAccountRepository
+    public class AccountRepository(ApplicationDbContext dbContext) : IAccountRepository
     {
-        private readonly ApplicationDbContext _dbContext;
-
-        public AccountRepository(ApplicationDbContext context)
-        {
-            _dbContext = context;
-        }
-
         public Task<List<Account>> GetAllAsync()
         {
-            return Task.FromResult(_dbContext.Accounts.ToList());
+            return Task.FromResult(dbContext.Accounts.ToList());
         }
 
         public Task<Account?> GetByIdAsync(Guid id)
         {
-            var account = _dbContext.Accounts.ToList().FirstOrDefault(a => a.Identifier == id);
+            var account = dbContext.Accounts.ToList().FirstOrDefault(a => a.Identifier == id);
+
             return Task.FromResult(account);
         }
 
 
         public Task<Account?> GetByCnpjAsync(string cnpj)
         {
-            var account = _dbContext.Accounts.ToList().FirstOrDefault(a => a.Cnpj == cnpj);
+            var account = dbContext.Accounts.ToList().FirstOrDefault(a => a.Cnpj == cnpj);
 
             return Task.FromResult(account);
         }
@@ -44,14 +39,23 @@ namespace ApiTest.Repositories
                 UpdatedAt = DateTime.UtcNow
             };
 
-            _dbContext.Accounts.Add(newAccount);
+            dbContext.Accounts.Add(newAccount);
+
+
+            AccountView accountVIew = new()
+            {
+                Cnpj = newAccount.Cnpj,
+                Identifier = newAccount.Identifier,
+                Name = newAccount.Name
+            };
+
 
             return Task.FromResult(newAccount);
         }
 
         public Task<bool> UpdateAsync(Account account)
         {
-            var existingAccount = _dbContext.Accounts.ToList().FirstOrDefault(a => a.Identifier == account.Identifier);
+            var existingAccount = dbContext.Accounts.ToList().FirstOrDefault(a => a.Identifier == account.Identifier);
             if (existingAccount != null)
             {
                 return Task.FromResult(true);
@@ -61,10 +65,10 @@ namespace ApiTest.Repositories
 
         public Task<bool> DeleteAsync(Guid id)
         {
-            var account = _dbContext.Accounts.ToList().FirstOrDefault(a => a.Identifier == id);
+            var account = dbContext.Accounts.ToList().FirstOrDefault(a => a.Identifier == id);
             if (account != null)
             {
-                _dbContext.Accounts.Remove(account);
+                dbContext.Accounts.Remove(account);
                 return Task.FromResult(true);
             }
             return Task.FromResult(false);
